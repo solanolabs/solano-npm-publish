@@ -1,0 +1,28 @@
+{
+  "name": "solano-npm-publish",
+  "version": "1.0.0",
+  "description": "Publish NPM packages from Solano CI",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/solanolabs/solano-npm-publish.git"
+  },
+  "keywords": [
+    "publish",
+    "solano",
+    "ci",
+    "npm",
+    "deploy"
+  ],
+  "author": "Solano Labs <support@solanolabs.com> (https://www.solanolabs.com/)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/solanolabs/solano-npm-publish/issues"
+  },
+  "homepage": "https://github.com/solanolabs/solano-npm-publish",
+  "files": [
+    "solano-npm-publish"
+  ],
+  "bin": {
+    "solano-npm-publish": "./solano-npm-publish"
+  }
+}

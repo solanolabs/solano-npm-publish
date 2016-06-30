@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+# solano-npm-publish
+# Solano CI post_build hook script (http://docs.solanolabs.com/Setup/setup-hooks/)
+
+### Exit the script on errors ###
+set -o errexit -o pipefail
+
+### Should this build trigger a npm publish? ###
+
+# Only npm publish if all tests have passed
+if [[ "passed" != "$TDDIUM_BUILD_STATUS" ]]; then
+  echo "\$TDDIUM_BUILD_STATUS = $TDDIUM_BUILD_STATUS"
+  echo "Will only npm publish on passed builds"
+  exit
+fi
+
+# Only npm publish on 'master' branch
+if [[ "master" != "$TDDIUM_CURRENT_BRANCH" ]]; then
+  echo "\$TDDIUM_CURRENT_BRANCH = $TDDIUM_CURRENT_BRANCH"
+  echo "Will only npm publish on master branch"
+  exit
+fi
+
+# Only npm publish on webhook-triggered builds from SCM server
+if [[ "ci" != "$TDDIUM_MODE" ]]; then
+  echo "\$TDDIUM_MODE = $TDDIUM_MODE"
+  echo "Will only npm publish on ci initiated builds"
+  exit
+fi
+
+# Only npm publish on tagged commits with tags matching semantic versioning
+if tags=$(git tag --contains $TDDIUM_CURRENT_COMMIT); then
+  for tag in $tags; do
+    if [[ $tag =~ ^v?[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+      PUBLISH_TAG=$tag
+    fi
+  done
+  if [ -z "$PUBLISH_TAG" ]; then
+    echo "No tags matched semantic versioning"
+    echo "Will only npm publish when a properly versioned tag is present"
+    exit
+  fi
+else
+  echo "No git tags on current commit (${TDDIUM_CURRENT_COMMIT})"
+  echo "Will only npm publish on tagged builds"
+  exit
+fi
+
+### Are all of the necessary environment variables set? ###
+if [ -z "$NPM_TOKEN" ]; then
+  echo "ERROR: The \$NPM_TOKEN environement variable is required"
+  echo 'See: http://docs.solanolabs.com/Setup/setting-environment-variables/#via-config-variables'
+  echo 'Please use `solano config:add <scope> <key> <value>` to set sensitive values'
+  exit 1
+fi
+if [ -z "$NPM_REGISTRY" ]; then
+  NPM_REGISTRY="//registry.npmjs.org/"
+  echo "Setting NPM registry = $NPM_REGISTRY"
+fi
+
+### Create .npmrc file ###
+echo "${NPM_REGISTRY}:_authToken=${NPM_TOKEN}" > .npmrc
+
+### Publish to registry ###
+echo "Publishing NPM package"
+npm publish
