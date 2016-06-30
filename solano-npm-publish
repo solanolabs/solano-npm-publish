@@ -35,14 +35,14 @@ if tags=$(git tag --contains $TDDIUM_CURRENT_COMMIT); then
       PUBLISH_TAG=$tag
     fi
   done
-  if [ -z "$PUBLISH_TAG" ]; then
-    echo "No tags matched semantic versioning"
-    echo "Will only npm publish when a properly versioned tag is present"
-    exit
-  fi
 else
   echo "No git tags on current commit (${TDDIUM_CURRENT_COMMIT})"
   echo "Will only npm publish on tagged builds"
+  exit
+fi
+if [ -z "$PUBLISH_TAG" ]; then
+  echo "No tags matched semantic versioning"
+  echo "Will only npm publish when a properly versioned tag is present"
   exit
 fi
 
