@@ -28,6 +28,19 @@ if [[ "ci" != "$TDDIUM_MODE" ]]; then
   exit
 fi
 
+# Fetch tags from SCM if possible
+if git remote -v | grep ci-origin | head -n 1 | awk '{print $2}'; then
+  origin_url=`git remote -v | grep ci-origin | head -n 1 | awk '{print $2}'`
+  if git fetch --tags ci-origin; then
+    echo "Fetched latest git tags from: $origin_url"
+  else
+    echo "Could not fetch latest git tags from: $origin_url"
+  fi
+else
+  echo "git remote 'ci-origin' does not exist"
+  echo "Could not fetch additional git tags"
+fi
+
 # Only npm publish on tagged commits with tags matching semantic versioning
 if tags=$(git tag --contains $TDDIUM_CURRENT_COMMIT); then
   for tag in $tags; do
@@ -58,8 +71,17 @@ if [ -z "$NPM_REGISTRY" ]; then
   echo "Setting NPM registry = $NPM_REGISTRY"
 fi
 
-### Create .npmrc file ###
-echo "${NPM_REGISTRY}:_authToken=${NPM_TOKEN}" > .npmrc
+### Create .npmrc file (if id doesn't already exist) ###
+if [ ! -f .npmrc ]; then
+  echo "${NPM_REGISTRY}:_authToken=${NPM_TOKEN}" > .npmrc
+fi
+
+### See if the current version is already in the registry
+CURRENT_VERSION=`grep version package.json | cut -d':' -f2 | sed 's/"//g' | sed 's/,//g' | sed 's/ //g'`
+if npm view "" .versions | sed 's/[][]//g' | sed 's/,//g' | sed "s/'//g" | awk '{print $1}' | grep ^${CURRENT_VERSION}$; then
+  echo "Current version ($CURRENT_VERSION) already exists in registry"
+  exit
+fi
 
 ### Publish to registry ###
 echo "Publishing NPM package"

@@ -1,6 +1,6 @@
 {
   "name": "solano-npm-publish",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Publish NPM packages from Solano CI",
   "repository": {
     "type": "git",
